@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+nost<!DOCTYPE html>
 <html lang="cs">
 <head>
   <meta charset="utf-8" />
@@ -19,7 +19,7 @@
     .chip.auth  { background:#ff6f6f; }     /* autorita */
     .chip.lib   { background:#6fff8f; }     /* liberalismus */
     .chip.trans { background:#d28bff; }     /* transformace */
-    .chip.cont  { background:#9ad06b; }     /* kontinuita */
+    .chip.cont  { background:#9ad06b; }     /* něměnnost */
     .tooltip {
       position: fixed; pointer-events: none; background:#111; color:#eee; border:1px solid #333; padding:6px 8px; border-radius:8px; font-size:13px; white-space:nowrap; transform: translate(-50%, calc(-100% - 10px));
       box-shadow: 0 6px 18px #0008;
@@ -40,7 +40,7 @@
   <div id="app"></div>
 
   <div class="hud">
-    <div><strong>Politická krychle</strong> — <em>Ekonomická</em>, <em>Mocenská</em>, <em>Dynamická</em> (Transformace ↔ Kontinuita)</div>
+    <div><strong>Politická krychle</strong> — <em>Ekonomická</em>, <em>Mocenská</em>, <em>Dynamická</em> (Transformace ↔ Neměnnost)</div>
     <div class="controls">
       <button id="resetView" class="btn">Reset pohledu</button>
       <button id="toggleLabels" class="btn">Přepnout štítky</button>
@@ -146,7 +146,7 @@
     const yArrowP = new THREE.ArrowHelper(new THREE.Vector3(0,1,0), new THREE.Vector3(0,0,0), axisLen, 0xff6f6f); // ↑ autorita
     const yArrowN = new THREE.ArrowHelper(new THREE.Vector3(0,-1,0), new THREE.Vector3(0,0,0), axisLen, 0x6fff8f); // ↓ liberalismus
     const zArrowP = new THREE.ArrowHelper(new THREE.Vector3(0,0,1), new THREE.Vector3(0,0,0), axisLen, 0xd28bff); // → transformace
-    const zArrowN = new THREE.ArrowHelper(new THREE.Vector3(0,0,-1), new THREE.Vector3(0,0,0), axisLen, 0x9ad06b); // ← kontinuita
+    const zArrowN = new THREE.ArrowHelper(new THREE.Vector3(0,0,-1), new THREE.Vector3(0,0,0), axisLen, 0x9ad06b); // ← neměnnost
     axisGroup.add(xArrowP,xArrowN,yArrowP,yArrowN,zArrowP,zArrowN);
 
     function label(text, color="#e7e7e7") {
@@ -172,7 +172,7 @@
     const centerLbl = label('Ekonomická / Mocenská / Dynamická','#aab'); centerLbl.position.set(0,0,0); axisGroup.add(centerLbl);
 
     // ======= Body (subjekty)
-    // Konvence: x (−1..+1) levice→pravice, y (−1..+1) liberalismus→autorita, z (−1..+1) kontinuita→transformace
+    // Konvence: x (−1..+1) levice→pravice, y (−1..+1) liberalismus→autorita, z (−1..+1) neměnnost→transformace
     const subjects = [
   { "name": "Woke / identitární aktivismus (etatistický)", "x": -0.85, "y": 0.65, "z": 0.95, "color": 13733631 },
   { "name": "Anarcho-progresivismus", "x": -0.85, "y": -0.80, "z": 0.85, "color": 13733631 },
@@ -186,7 +186,7 @@
 
   { "name": "Fašismus / korporativismus / nác. socialismus", "x": 0.30, "y": 0.95, "z": 0.70, "color": 16733551 },
   { "name": "Neoliberální pravice s progresivní agendou (Big Tech)", "x": 0.75, "y": -0.60, "z": 0.25, "color": 16750895 },
-  { "name": "Autoritářská pravice kontinuitní (Franco, Salazar)", "x": 0.60, "y": 0.85, "z": -0.90, "color": 16750895 },
+  { "name": "Autoritářská pravice (Franco, Salazar)", "x": 0.60, "y": 0.85, "z": -0.90, "color": 16750895 },
 
   { "name": "Libertariáni (klasická pravice)", "x": 0.95, "y": -0.95, "z": 0.00, "color": 7340143 },
   { "name": "Anarchokapitalisté (AnCap)", "x": 1.00, "y": -1.00, "z": 0.00, "color": 7340143 },
@@ -303,4 +303,5 @@
   </script>
 </body>
 </html>
+
 
