@@ -52,10 +52,10 @@
 	  </div><br><div>
       <span>Mocenská: <span class="chip lib"></span> ← liberalismus | autorita → <span class="chip auth" style="margin-left:6px"></span></span>
 	  </div><br><div>
-      <span>Dynamická: <span class="chip cont"></span> ← kontinuita | transformace → <span class="chip trans" style="margin-left:6px"></span></span>
+      <span>Dynamická: <span class="chip cont"></span> ← neměnnost | transformace → <span class="chip trans" style="margin-left:6px"></span></span>
 	  </div>
     </div>
-    <div style="margin-top:6px;">Otáčení: myš / touch • Zoom: kolečko • Najeď myší na bod pro popisek</div>
+    <div style="margin-top:6px;">Otáčení: myš / touch • Zoom: kolečko • Najetím myší na bod zobrazíte popisek</div>
   </div>
 
   <div id="tooltip" class="tooltip" style="display:none;"></div>
@@ -165,8 +165,8 @@
     const lxN = label('Levice','rgba(111,177,255,0.95)'); lxN.position.set(-axisLen-0.1,0,0); axisGroup.add(lxN);
     const lxP = label('Pravice','rgba(255,168,111,0.95)'); lxP.position.set(axisLen+0.1,0,0); axisGroup.add(lxP);
     const lyN = label('Liberalismus','rgba(111,255,143,0.95)'); lyN.position.set(0,-axisLen-0.1,0); axisGroup.add(lyN);
-    const lyP = label('Autorita','rgba(255,111,111,0.95)'); lyP.position.set(0,axisLen+0.1,0); axisGroup.add(lyP);
-    const lzN = label('Kontinuita','rgba(154,208,107,0.95)'); lzN.position.set(0,0,-axisLen-0.1); axisGroup.add(lzN);
+    const lyP = label('Autoritářství','rgba(255,111,111,0.95)'); lyP.position.set(0,axisLen+0.1,0); axisGroup.add(lyP);
+    const lzN = label('Neměnnost','rgba(154,208,107,0.95)'); lzN.position.set(0,0,-axisLen-0.1); axisGroup.add(lzN);
     const lzP = label('Transformace','rgba(210,139,255,0.95)'); lzP.position.set(0,0,axisLen+0.1); axisGroup.add(lzP);
 
     const centerLbl = label('Ekonomická / Mocenská / Dynamická','#aab'); centerLbl.position.set(0,0,0); axisGroup.add(centerLbl);
@@ -192,7 +192,7 @@
   { "name": "Anarchokapitalisté (AnCap)", "x": 1.00, "y": -1.00, "z": 0.00, "color": 7340143 },
 
   { "name": "Konzervativní demokrati (umírnění)", "x": 0.20, "y": -0.20, "z": -0.40, "color": 10185067 },
-  { "name": "Populisté (styl, ne ideologie)", "x": -0.20, "y": 0.70, "z": -0.50, "color": 16762854 }
+  
 ]
 
     // materiál bodů
@@ -303,3 +303,4 @@
   </script>
 </body>
 </html>
+
