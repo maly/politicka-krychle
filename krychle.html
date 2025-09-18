@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8" />
+  <title>Politická krychle – Ekonomická / Mocenská / Dynamická</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    html, body { height:100%; margin:0; background:#0b0d10; color:#e7e7e7; font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif; }
+    #app { position:fixed; inset:0; }
+    .hud {
+      position:fixed; left:12px; top:12px; padding:10px 12px; background:#111a; border:1px solid #3337; border-radius:10px; backdrop-filter: blur(6px);
+      font-size:14px; line-height:1.4; max-width:520px;
+    }
+    .hud kbd { background:#222; border:1px solid #444; border-bottom-color:#333; padding:2px 6px; border-radius:6px; font-size:12px; }
+    .legend { margin-top:8px; display:grid; grid-template-columns:auto 1fr; gap:6px 10px; }
+    .chip { display:inline-block; width:12px; height:12px; border-radius:3px; background:#888; align-self:center; }
+    .chip.left  { background:#6fb1ff; }     /* levice */
+    .chip.right { background:#ffa86f; }     /* pravice */
+    .chip.auth  { background:#ff6f6f; }     /* autorita */
+    .chip.lib   { background:#6fff8f; }     /* liberalismus */
+    .chip.trans { background:#d28bff; }     /* transformace */
+    .chip.cont  { background:#9ad06b; }     /* kontinuita */
+    .tooltip {
+      position: fixed; pointer-events: none; background:#111; color:#eee; border:1px solid #333; padding:6px 8px; border-radius:8px; font-size:13px; white-space:nowrap; transform: translate(-50%, calc(-100% - 10px));
+      box-shadow: 0 6px 18px #0008;
+    }
+    .footer {
+      position:fixed; right:12px; bottom:12px; opacity:.8; font-size:12px; color:#aaa;
+      background:#111a; border:1px solid #3337; padding:6px 8px; border-radius:8px; backdrop-filter: blur(6px);
+    }
+    a { color:#9fd4ff; text-decoration:none; }
+    .btn {
+      appearance:none; border:1px solid #3a3f46; background:#14181d; color:#e7e7e7; padding:6px 10px; border-radius:8px; cursor:pointer; font-size:13px;
+    }
+    .btn:hover { background:#1b222a; }
+    .controls { margin-top:8px; display:flex; gap:8px; flex-wrap:wrap; }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+
+  <div class="hud">
+    <div><strong>Politická krychle</strong> — <em>Ekonomická</em>, <em>Mocenská</em>, <em>Dynamická</em> (Transformace ↔ Kontinuita)</div>
+    <div class="controls">
+      <button id="resetView" class="btn">Reset pohledu</button>
+      <button id="toggleLabels" class="btn">Přepnout štítky</button>
+      <button id="toggleCube" class="btn">Skrýt/zobrazit krychli</button>
+    </div>
+    <div class="legend">
+	<div>
+      <span>Ekonomická: <span class="chip left"></span> ← levice | pravice → <span class="chip right" style="margin-left:6px"></span></span>
+	  </div><br><div>
+      <span>Mocenská: <span class="chip lib"></span> ← liberalismus | autorita → <span class="chip auth" style="margin-left:6px"></span></span>
+	  </div><br><div>
+      <span>Dynamická: <span class="chip cont"></span> ← kontinuita | transformace → <span class="chip trans" style="margin-left:6px"></span></span>
+	  </div>
+    </div>
+    <div style="margin-top:6px;">Otáčení: myš / touch • Zoom: kolečko • Najeď myší na bod pro popisek</div>
+  </div>
+
+  <div id="tooltip" class="tooltip" style="display:none;"></div>
+  <div class="footer">Osy jsou škálované na −1 … +1. Umístění je ilustrativní.</div>
+  
+<!-- Import maps polyfill (kvůli kompatibilitě prohlížečů) -->
+<script async src="https://unpkg.com/es-module-shims@1.10.0/dist/es-module-shims.js"></script>
+
+<!-- Import map: umožní používat 'three' a 'three/addons/...'
+     v importech uvnitř <script type="module"> -->
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+
+  <script type="module">
+  
+    import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
+    import { OrbitControls } from "https://unpkg.com/three@0.160.0/examples/jsm/controls/OrbitControls.js";
+    import { CSS2DRenderer, CSS2DObject } from "https://unpkg.com/three@0.160.0/examples/jsm/renderers/CSS2DRenderer.js";
+
+    // ======= Scéna, kamera, renderery
+    const app = document.getElementById('app');
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x0b0d10);
+
+    const camera = new THREE.PerspectiveCamera(50, window.innerWidth/window.innerHeight, 0.1, 100);
+    camera.position.set(3.4, 2.6, 3.6);
+
+    const renderer = new THREE.WebGLRenderer({ antialias:true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    app.appendChild(renderer.domElement);
+
+    const labelRenderer = new CSS2DRenderer();
+    labelRenderer.setSize(window.innerWidth, window.innerHeight);
+    labelRenderer.domElement.style.position = 'fixed';
+    labelRenderer.domElement.style.inset = '0';
+    labelRenderer.domElement.style.pointerEvents = 'none';
+    app.appendChild(labelRenderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.minDistance = 2.2;
+    controls.maxDistance = 12;
+
+    // ======= Světla
+    const hemi = new THREE.HemisphereLight(0xffffff, 0x222233, 0.8);
+    scene.add(hemi);
+    const dir = new THREE.DirectionalLight(0xffffff, 0.6);
+    dir.position.set(2, 3, 4);
+    scene.add(dir);
+
+    // ======= Krychle (okraj + mřížka)
+    const cubeGroup = new THREE.Group(); scene.add(cubeGroup);
+    const boxGeom = new THREE.BoxGeometry(2,2,2);
+    const wire = new THREE.LineSegments(new THREE.EdgesGeometry(boxGeom), new THREE.LineBasicMaterial({ color:0x3a4452, linewidth:1 }));
+    cubeGroup.add(wire);
+
+    // pomocné mřížky uvnitř
+    const gridMat = new THREE.LineBasicMaterial({ color:0x26303a, transparent:true, opacity:0.9 });
+    function addGridPlane(size=2, divisions=8, axis='xy', pos=0) {
+      const step = size / divisions;
+      const geo = new THREE.BufferGeometry();
+      const verts = [];
+      for (let i=0;i<=divisions;i++){
+        const a = -size/2 + i*step;
+        if (axis==='xy') { verts.push(-size/2, a, pos,  size/2, a, pos,  a, -size/2, pos,  a, size/2, pos); }
+        if (axis==='xz') { verts.push(-size/2, pos, a,  size/2, pos, a,  a, pos, -size/2,  a, pos, size/2); }
+        if (axis==='yz') { verts.push(pos, -size/2, a,  pos, size/2, a,  pos, a, -size/2,  pos, a, size/2); }
+      }
+      geo.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3));
+      cubeGroup.add(new THREE.LineSegments(geo, gridMat));
+    }
+    addGridPlane(2, 8, 'xy', -1); addGridPlane(2, 8, 'xy', 1);
+    addGridPlane(2, 8, 'xz', -1); addGridPlane(2, 8, 'xz', 1);
+    addGridPlane(2, 8, 'yz', -1); addGridPlane(2, 8, 'yz', 1);
+
+    // ======= Osy (ArrowHelpers) – X=Ekonomická, Y=Mocenská, Z=Dynamická
+    const axisGroup = new THREE.Group(); scene.add(axisGroup);
+    const axisLen = 1.4;
+    const xArrowP = new THREE.ArrowHelper(new THREE.Vector3(1,0,0), new THREE.Vector3(0,0,0), axisLen, 0xffa86f); // pravice →
+    const xArrowN = new THREE.ArrowHelper(new THREE.Vector3(-1,0,0), new THREE.Vector3(0,0,0), axisLen, 0x6fb1ff); // ← levice
+    const yArrowP = new THREE.ArrowHelper(new THREE.Vector3(0,1,0), new THREE.Vector3(0,0,0), axisLen, 0xff6f6f); // ↑ autorita
+    const yArrowN = new THREE.ArrowHelper(new THREE.Vector3(0,-1,0), new THREE.Vector3(0,0,0), axisLen, 0x6fff8f); // ↓ liberalismus
+    const zArrowP = new THREE.ArrowHelper(new THREE.Vector3(0,0,1), new THREE.Vector3(0,0,0), axisLen, 0xd28bff); // → transformace
+    const zArrowN = new THREE.ArrowHelper(new THREE.Vector3(0,0,-1), new THREE.Vector3(0,0,0), axisLen, 0x9ad06b); // ← kontinuita
+    axisGroup.add(xArrowP,xArrowN,yArrowP,yArrowN,zArrowP,zArrowN);
+
+    function label(text, color="#e7e7e7") {
+      const el = document.createElement('div');
+      el.textContent = text;
+      el.style.color = color;
+      el.style.fontSize = '12px';
+      el.style.padding = '2px 4px';
+      el.style.background = '#000a';
+      el.style.border = '1px solid #333';
+      el.style.borderRadius = '6px';
+      el.style.whiteSpace = 'nowrap';
+      return new CSS2DObject(el);
+    }
+    // konce os
+    const lxN = label('Levice','rgba(111,177,255,0.95)'); lxN.position.set(-axisLen-0.1,0,0); axisGroup.add(lxN);
+    const lxP = label('Pravice','rgba(255,168,111,0.95)'); lxP.position.set(axisLen+0.1,0,0); axisGroup.add(lxP);
+    const lyN = label('Liberalismus','rgba(111,255,143,0.95)'); lyN.position.set(0,-axisLen-0.1,0); axisGroup.add(lyN);
+    const lyP = label('Autorita','rgba(255,111,111,0.95)'); lyP.position.set(0,axisLen+0.1,0); axisGroup.add(lyP);
+    const lzN = label('Kontinuita','rgba(154,208,107,0.95)'); lzN.position.set(0,0,-axisLen-0.1); axisGroup.add(lzN);
+    const lzP = label('Transformace','rgba(210,139,255,0.95)'); lzP.position.set(0,0,axisLen+0.1); axisGroup.add(lzP);
+
+    const centerLbl = label('Ekonomická / Mocenská / Dynamická','#aab'); centerLbl.position.set(0,0,0); axisGroup.add(centerLbl);
+
+    // ======= Body (subjekty)
+    // Konvence: x (−1..+1) levice→pravice, y (−1..+1) liberalismus→autorita, z (−1..+1) kontinuita→transformace
+    const subjects = [
+  { "name": "Woke / identitární aktivismus (etatistický)", "x": -0.85, "y": 0.65, "z": 0.95, "color": 13733631 },
+  { "name": "Anarcho-progresivismus", "x": -0.85, "y": -0.80, "z": 0.85, "color": 13733631 },
+
+  { "name": "Umírnění zelení (parlamentní strany)", "x": -0.60, "y": -0.30, "z": 0.45, "color": 7343615 },
+  { "name": "Radikální zelení (XR, degrowth)", "x": -0.70, "y": 0.60, "z": 0.90, "color": 13733631 },
+
+  { "name": "Stará levice (komunisté)", "x": -0.95, "y": 0.85, "z": -0.80, "color": 7343615 },
+  { "name": "Sociální demokracie / odbory (klasická)", "x": -0.60, "y": 0.20, "z": -0.20, "color": 7343615 },
+  { "name": "Libertariánští socialisté", "x": -0.80, "y": -0.60, "z": 0.00, "color": 7343615 },
+
+  { "name": "Fašismus / korporativismus / nác. socialismus", "x": 0.30, "y": 0.95, "z": 0.70, "color": 16733551 },
+  { "name": "Neoliberální pravice s progresivní agendou (Big Tech)", "x": 0.75, "y": -0.60, "z": 0.25, "color": 16750895 },
+  { "name": "Autoritářská pravice kontinuitní (Franco, Salazar)", "x": 0.60, "y": 0.85, "z": -0.90, "color": 16750895 },
+
+  { "name": "Libertariáni (klasická pravice)", "x": 0.95, "y": -0.95, "z": 0.00, "color": 7340143 },
+  { "name": "Anarchokapitalisté (AnCap)", "x": 1.00, "y": -1.00, "z": 0.00, "color": 7340143 },
+
+  { "name": "Konzervativní demokrati (umírnění)", "x": 0.20, "y": -0.20, "z": -0.40, "color": 10185067 },
+  { "name": "Populisté (styl, ne ideologie)", "x": -0.20, "y": 0.70, "z": -0.50, "color": 16762854 }
+]
+
+    // materiál bodů
+    const pointGeom = new THREE.SphereGeometry(0.035, 24, 24);
+    const pointsGroup = new THREE.Group(); scene.add(pointsGroup);
+
+    // pro raycasting
+    const pickables = [];
+
+    // přepínač štítků
+    let labelsVisible = true;
+
+    subjects.forEach(s => {
+      const mat = new THREE.MeshStandardMaterial({ color:s.color, roughness:0.4, metalness:0.05, emissive: new THREE.Color(s.color).multiplyScalar(0.15) });
+      const m = new THREE.Mesh(pointGeom, mat);
+      m.position.set(s.x, s.y, s.z);
+      m.userData = { name: s.name, color: s.color, pos:[s.x,s.y,s.z] };
+      pointsGroup.add(m);
+      pickables.push(m);
+
+      // jemný billboardový štítek
+      const el = document.createElement('div');
+      el.textContent = s.name;
+      el.style.fontSize = '11px';
+      el.style.padding = '2px 6px';
+      el.style.borderRadius = '6px';
+      el.style.background = '#000a';
+      el.style.border = '1px solid #333';
+      el.style.color = '#ddd';
+      const lbl = new CSS2DObject(el);
+      lbl.position.set(0, 0.06, 0);
+      m.add(lbl);
+      m.userData.label = lbl;
+    });
+
+    // ======= Interakce: hover tooltip
+    const tooltip = document.getElementById('tooltip');
+    const mouse = new THREE.Vector2();
+    const raycaster = new THREE.Raycaster();
+    let hoverObj = null;
+
+    function onMouseMove(e){
+      const rect = renderer.domElement.getBoundingClientRect();
+      mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+      mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+
+      raycaster.setFromCamera(mouse, camera);
+      const hits = raycaster.intersectObjects(pickables, false);
+      if (hits.length){
+        const o = hits[0].object;
+        if (hoverObj !== o){
+          hoverObj = o;
+          const { name, pos } = o.userData;
+          tooltip.style.display = 'block';
+          tooltip.textContent = `${name}`;
+        }
+        tooltip.style.left = e.clientX + 'px';
+        tooltip.style.top  = e.clientY + 'px';
+      } else {
+        hoverObj = null;
+        tooltip.style.display = 'none';
+      }
+    }
+    window.addEventListener('mousemove', onMouseMove);
+
+    // ======= Ovládací prvky
+    document.getElementById('resetView').onclick = () => {
+      camera.position.set(3.4, 2.6, 3.6);
+      controls.target.set(0,0,0);
+      controls.update();
+    };
+    document.getElementById('toggleLabels').onclick = () => {
+      labelsVisible = !labelsVisible;
+      pickables.forEach(m => {
+    if (m.userData.label) {
+      m.userData.label.visible = labelsVisible;
+    }
+  });
+    };
+    document.getElementById('toggleCube').onclick = () => {
+      cubeGroup.visible = !cubeGroup.visible;
+    };
+
+    // ======= Animace
+    function tick(){
+      controls.update();
+      renderer.render(scene, camera);
+      labelRenderer.render(scene, camera);
+      requestAnimationFrame(tick);
+    }
+    tick();
+
+    // ======= Resize
+    window.addEventListener('resize', () => {
+      const w = window.innerWidth, h = window.innerHeight;
+      camera.aspect = w/h; camera.updateProjectionMatrix();
+      renderer.setSize(w,h);
+      labelRenderer.setSize(w,h);
+    });
+
+    // ======= Pomocný kříž v centru
+    const axesHelper = new THREE.AxesHelper(0.35);
+    axesHelper.material.depthTest = true;
+    axesHelper.material.transparent = true;
+    axesHelper.material.opacity = 0.6;
+    scene.add(axesHelper);
+
+  </script>
+</body>
+</html>
